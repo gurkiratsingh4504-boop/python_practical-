@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Python Full Stack Tracker</title>
+    <style>
+      :root {
+        --bg: #f6f5f2;
+        --ink: #1c1b19;
+        --ink-soft: #5c5a54;
+        --line: #dedcd5;
+        --accent: #0e6b5c;
+        --accent-soft: #e3efea;
+        --amber: #b4791f;
+        --amber-soft: #f5ebda;
+        --card: #ffffff;
+        --font-serif: "Source Serif 4", Georgia, serif;
+        --font-mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-mono);
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 28px 20px 80px;
+      }
+
+      header {
+        margin-bottom: 22px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        color: var(--ink-soft);
+        letter-spacing: 0.02em;
+        margin-bottom: 6px;
+      }
+      h1 {
+        font-family: var(--font-serif);
+        font-weight: 600;
+        font-size: 28px;
+        margin: 0 0 4px;
+        letter-spacing: -0.01em;
+      }
+      .sub {
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+
+      .progress-block {
+        margin-top: 20px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        padding: 16px 18px;
+      }
+      .progress-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 10px;
+      }
+      .progress-num {
+        font-family: var(--font-serif);
+        font-size: 22px;
+        color: var(--accent);
+      }
+      .progress-label {
+        font-size: 12px;
+        color: var(--ink-soft);
+      }
+      .bar-track {
+        height: 6px;
+        background: var(--line);
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        background: var(--accent);
+        width: 0%;
+        transition: width 0.35s ease;
+      }
+      .streak {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--amber);
+      }
+
+      nav.phase-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 24px 0 18px;
+      }
+      .tab {
+        border: 1px solid var(--line);
+        background: var(--card);
+        color: var(--ink-soft);
+        padding: 6px 10px;
+        cursor: pointer;
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      .tab.active {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-soft);
+      }
+      .tab .tab-progress {
+        color: inherit;
+        opacity: 0.7;
+        margin-left: 4px;
+      }
+
+      section.phase {
+        display: none;
+      }
+      section.phase.active {
+        display: block;
+      }
+
+      .phase-intro {
+        font-size: 12.5px;
+        color: var(--ink-soft);
+        margin-bottom: 16px;
+        border-left: 2px solid var(--line);
+        padding-left: 10px;
+      }
+
+      .week {
+        border: 1px solid var(--line);
+        background: var(--card);
+        margin-bottom: 12px;
+      }
+      .week-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 14px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .week-title {
+        font-family: var(--font-serif);
+        font-size: 15px;
+      }
+      .week-count {
+        font-size: 11px;
+        color: var(--ink-soft);
+      }
+      .week-count.done {
+        color: var(--accent);
+      }
+      .week-body {
+        display: none;
+        border-top: 1px solid var(--line);
+        padding: 4px 14px 8px;
+      }
+      .week.open .week-body {
+        display: block;
+      }
+      .week.open .chevron {
+        transform: rotate(90deg);
+      }
+      .chevron {
+        display: inline-block;
+        transition: transform 0.15s ease;
+        margin-left: 8px;
+        color: var(--ink-soft);
+        font-size: 11px;
+      }
+
+      .task {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid #efeee9;
+      }
+      .task:last-child {
+        border-bottom: none;
+      }
+      .task input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        min-width: 16px;
+        border: 1.5px solid var(--ink-soft);
+        margin-top: 1px;
+        cursor: pointer;
+        position: relative;
+        background: var(--card);
+      }
+      .task input[type="checkbox"]:checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .task input[type="checkbox"]:checked::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 1px;
+        width: 4px;
+        height: 8px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(40deg);
+      }
+      .task label {
+        cursor: pointer;
+        flex: 1;
+      }
+      .task.done label {
+        color: var(--ink-soft);
+        text-decoration: line-through;
+        text-decoration-color: var(--line);
+      }
+
+      footer {
+        margin-top: 28px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .reset-btn {
+        border: 1px solid var(--line);
+        background: none;
+        color: var(--ink-soft);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      .reset-btn:hover {
+        border-color: #c0574b;
+        color: #c0574b;
+      }
+      .status-note {
+        font-size: 11px;
+        color: var(--ink-soft);
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 22px;
+        }
+        .progress-num {
+          font-size: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="eyebrow">progress tracker</div>
+        <h1>Python Full Stack Roadmap</h1>
+        <div class="sub">
+          Tick off tasks as you complete them. Your progress saves
+          automatically.
+        </div>
+      </header>
+
+      <div class="progress-block">
+        <div class="progress-top">
+          <div>
+            <span class="progress-num" id="overallPct">0%</span>
+            <span class="progress-label">overall complete</span>
+          </div>
+          <div class="progress-label" id="overallCount">0 / 0 tasks</div>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" id="overallBar"></div>
+        </div>
+        <div class="streak" id="statusLine">
+          Let's get started — check off your first task.
+        </div>
+      </div>
+
+      <nav class="phase-tabs" id="phaseTabs"></nav>
+
+      <div id="phaseContainer"></div>
+
+      <footer>
+        <span class="status-note" id="saveNote"></span>
+        <button class="reset-btn" id="resetBtn">Reset all progress</button>
+      </footer>
+    </div>
+
+    <script>
+      const DATA = [
+        {
+          id: "p1",
+          name: "Phase 1",
+          title: "Python Fundamentals (Weeks 1-6)",
+          intro:
+            "Core language, OOP, Git, HTML/CSS basics, SQL basics, light DSA.",
+          weeks: [
+            {
+              id: "p1w1",
+              title: "Week 1 — Core Syntax",
+              tasks: [
+                "Learn variables, data types, operators",
+                "Learn conditionals (if/elif/else)",
+                "Learn loops (for/while), break/continue",
+                "Build: print patterns & basic I/O programs",
+                "Build: simple calculator (all operations)",
+                "Build: number guessing game",
+                "Build: FizzBuzz + 2 variations",
+                "Set up Git — init, add, commit, push",
+                "Create GitHub repo and push Week 1 code",
+              ],
+            },
+            {
+              id: "p1w2",
+              title: "Week 2 — Data Structures",
+              tasks: [
+                "Learn lists (indexing, slicing, methods)",
+                "Learn tuples — when to use over lists",
+                "Learn dictionaries (keys, values, iteration)",
+                "Learn sets and basic set operations",
+                "Practice: list manipulation exercises",
+                "Build: contact book using a dictionary",
+                "Build: word frequency counter",
+                "Practice: set operations (common elements)",
+                "Build: inventory management CLI tool",
+                "HTML/CSS: basic tags & page structure",
+                "DSA: 2-3 easy array problems",
+              ],
+            },
+            {
+              id: "p1w3",
+              title: "Week 3 — Functions Deep Dive",
+              tasks: [
+                "Learn function params, return values, defaults",
+                "Learn *args and **kwargs",
+                "Learn scope (local vs global)",
+                "Learn lambda functions",
+                "Learn basic recursion (factorial, fibonacci)",
+                "Refactor Week 2 projects using functions",
+                "Practice: map/filter/reduce with lambdas",
+                "Build: to-do list CLI app (function-based)",
+                "Push to GitHub with a proper README",
+                "HTML/CSS: flexbox — build 2-3 static layouts",
+                "DSA: recursion practice problems",
+              ],
+            },
+            {
+              id: "p1w4",
+              title: "Week 4 — OOP Part 1",
+              tasks: [
+                "Learn classes, objects, __init__",
+                "Learn instance vs class attributes",
+                "Learn methods and basic encapsulation",
+                "Practice: Car / Student / BankAccount classes",
+                "Build: library management system",
+                "Refactor to-do app into class-based version",
+                "Review OOP — explain it out loud",
+                "SQL: SELECT, WHERE, basic filtering (SQLite)",
+                "DSA: continue easy array/string problems",
+              ],
+            },
+            {
+              id: "p1w5",
+              title: "Week 5 — OOP Part 2 + Errors + Files",
+              tasks: [
+                "Learn inheritance and polymorphism",
+                "Learn dunder methods (__str__, __repr__, __eq__)",
+                "Learn try/except/finally, custom exceptions",
+                "Learn file handling & JSON",
+                "Practice: Animal/Dog/Cat or Employee subclasses",
+                "Add error handling to Library/To-do project",
+                "Build: contact book that saves to JSON",
+                "Combine OOP + file persistence + error handling",
+                "SQL: JOIN, GROUP BY practice",
+                "DSA: hashmap-based problems",
+              ],
+            },
+            {
+              id: "p1w6",
+              title: "Week 6 — Modules, Venv + Final Project",
+              tasks: [
+                "Learn modules/packages, import variations",
+                "Learn pip and requirements.txt",
+                "Learn virtual environments (venv)",
+                "Build final project: Personal Finance Tracker",
+                "  — OOP-based (Transaction, Account classes)",
+                "  — Stores data in JSON, handles errors gracefully",
+                "  — Organized across multiple files/modules",
+                "Write a proper README for the final project",
+                "Push final project to GitHub with clean commits",
+                "Self-check: comfortable with functions/classes",
+                "Self-check: can explain OOP out loud",
+                "Self-check: solved 15-20 easy DSA problems",
+              ],
+            },
+          ],
+        },
+        {
+          id: "p2",
+          name: "Phase 2",
+          title: "Backend Framework (Weeks 7-12)",
+          intro: "Pick Flask or Django. Build and deploy real REST APIs.",
+          weeks: [
+            {
+              id: "p2w1",
+              title: "Weeks 7-8 — Framework Basics",
+              tasks: [
+                "Choose Flask or Django and set up a project",
+                "Learn routing & views / URL patterns",
+                "Learn the request/response cycle",
+                "Learn templating (Jinja2 / Django templates)",
+                "Build a simple multi-page app with routing",
+              ],
+            },
+            {
+              id: "p2w2",
+              title: "Weeks 9-10 — Database + REST APIs",
+              tasks: [
+                "Learn ORM basics (SQLAlchemy or Django ORM)",
+                "Learn models and migrations",
+                "Move from SQLite to PostgreSQL",
+                "Build REST endpoints with proper status codes",
+                "Learn request validation and error responses",
+              ],
+            },
+            {
+              id: "p2w3",
+              title: "Weeks 11-12 — Auth + Testing + Project",
+              tasks: [
+                "Learn sessions and JWT authentication",
+                "Learn basic OAuth concepts",
+                "Write tests with pytest / Django test framework",
+                "Build project: REST API with full CRUD + auth",
+                "Deploy-ready: real database, clean structure",
+                "Push to GitHub with README + API docs",
+              ],
+            },
+          ],
+        },
+        {
+          id: "p3",
+          name: "Phase 3",
+          title: "JavaScript + React (Weeks 13-18)",
+          intro: "Build interactive frontends that talk to your backend.",
+          weeks: [
+            {
+              id: "p3w1",
+              title: "Weeks 13-14 — JavaScript Fundamentals",
+              tasks: [
+                "Learn variables, functions, arrays/objects",
+                "Learn DOM manipulation",
+                "Learn fetch, promises, async/await",
+                "Learn ES6+ (arrow functions, destructuring, spread)",
+              ],
+            },
+            {
+              id: "p3w2",
+              title: "Weeks 15-16 — React Basics",
+              tasks: [
+                "Learn components and JSX",
+                "Learn props and state",
+                "Learn hooks: useState, useEffect, useContext",
+                "Learn React Router for navigation",
+              ],
+            },
+            {
+              id: "p3w3",
+              title: "Weeks 17-18 — API Integration + Project",
+              tasks: [
+                "Connect React to your Phase 2 backend API",
+                "Handle loading and error states properly",
+                "Learn Context API basics for state management",
+                "Build: full UI (forms, lists, auth flow) for your API",
+              ],
+            },
+          ],
+        },
+        {
+          id: "p4",
+          name: "Phase 4",
+          title: "Full Stack + DevOps Basics (Weeks 19-22)",
+          intro: "Connect everything, containerize, and deploy live.",
+          weeks: [
+            {
+              id: "p4w1",
+              title: "Weeks 19-20 — Integration + Docker",
+              tasks: [
+                "Connect React + Python backend + database fully",
+                "Learn Docker basics — Dockerfile",
+                "Learn docker-compose for multi-service apps",
+                "Learn .env files and secrets management",
+              ],
+            },
+            {
+              id: "p4w2",
+              title: "Weeks 21-22 — Deployment + CI",
+              tasks: [
+                "Deploy on Render, Railway, or AWS free tier",
+                "Set up config for dev vs prod environments",
+                "Set up a simple GitHub Actions workflow (run tests)",
+                "Build final project: fully deployed, live URL, clean README",
+              ],
+            },
+          ],
+        },
+        {
+          id: "p5",
+          name: "Phase 5",
+          title: "Portfolio (Weeks 23-26)",
+          intro: "2-3 polished, deployed projects. Resume and LinkedIn ready.",
+          weeks: [
+            {
+              id: "p5w1",
+              title: "Portfolio Projects",
+              tasks: [
+                "Finalize project 1 — live link + clean README + screenshots",
+                "Finalize project 2 — live link + clean README + screenshots",
+                "Finalize project 3 (optional) — showcases your strongest skill",
+                "Make sure one project solves a genuinely real problem",
+              ],
+            },
+            {
+              id: "p5w2",
+              title: "Resume + LinkedIn",
+              tasks: [
+                "Write a 1-page, project-focused resume",
+                "Quantify project impact where possible",
+                "Update LinkedIn headline: Python Full Stack Developer",
+                "Post about your projects/learning journey",
+              ],
+            },
+          ],
+        },
+        {
+          id: "p6",
+          name: "Phase 6",
+          title: "Interview Prep + Job Search (Week 24+)",
+          intro: "DSA ramps up, applications go out, interviews get practiced.",
+          weeks: [
+            {
+              id: "p6w1",
+              title: "DSA — Interview Level",
+              tasks: [
+                "Arrays, strings, hashmaps — solid practice",
+                "Two pointers, sliding window patterns",
+                "Basic trees and graphs (BFS/DFS)",
+                "Basic dynamic programming",
+                "Work through NeetCode 150 / LeetCode Easy-Medium",
+              ],
+            },
+            {
+              id: "p6w2",
+              title: "System Design Basics",
+              tasks: [
+                "Understand client → server → database request flow",
+                "Review REST API design principles",
+                "Practice basic database schema design",
+              ],
+            },
+            {
+              id: "p6w3",
+              title: "Interview Readiness",
+              tasks: [
+                "Can explain each project's architecture out loud",
+                "Can explain trade-offs and what you'd improve",
+                "Can explain OOP, REST, SQL joins, React state clearly",
+                "Practice mock interviews (peer or online)",
+              ],
+            },
+            {
+              id: "p6w4",
+              title: "Job Search",
+              tasks: [
+                "Set up profiles: LinkedIn, Naukri, Instahyre, Cutshort, Wellfound",
+                "Reach out to network for referrals",
+                "Apply directly on target company career pages",
+                "Consider freelance/Internshala gigs as a foot in the door",
+                "Track applications in a simple spreadsheet",
+              ],
+            },
+          ],
+        },
+      ];
+
+      let state = {};
+
+      function taskId(weekId, idx) {
+        return weekId + "-t" + idx;
+      }
+
+      function countWeek(week) {
+        const total = week.tasks.length;
+        const done = week.tasks.filter(
+          (_, i) => state[taskId(week.id, i)],
+        ).length;
+        return { total, done };
+      }
+      function countPhase(phase) {
+        let total = 0,
+          done = 0;
+        phase.weeks.forEach((w) => {
+          const c = countWeek(w);
+          total += c.total;
+          done += c.done;
+        });
+        return { total, done };
+      }
+      function countAll() {
+        let total = 0,
+          done = 0;
+        DATA.forEach((p) => {
+          const c = countPhase(p);
+          total += c.total;
+          done += c.done;
+        });
+        return { total, done };
+      }
+
+      function render() {
+        const tabsEl = document.getElementById("phaseTabs");
+        const containerEl = document.getElementById("phaseContainer");
+        tabsEl.innerHTML = "";
+        containerEl.innerHTML = "";
+
+        DATA.forEach((phase, pIdx) => {
+          const pc = countPhase(phase);
+          const tab = document.createElement("div");
+          tab.className = "tab" + (pIdx === 0 ? " active" : "");
+          tab.dataset.phase = phase.id;
+          tab.innerHTML =
+            phase.name +
+            '<span class="tab-progress">' +
+            pc.done +
+            "/" +
+            pc.total +
+            "</span>";
+          tab.onclick = () => switchPhase(phase.id);
+          tabsEl.appendChild(tab);
+
+          const section = document.createElement("section");
+          section.className = "phase" + (pIdx === 0 ? " active" : "");
+          section.dataset.phase = phase.id;
+
+          const introHTML =
+            '<div class="phase-intro"><strong style="font-family:var(--font-serif);color:var(--ink);">' +
+            phase.title +
+            "</strong><br>" +
+            phase.intro +
+            "</div>";
+
+          let weeksHTML = "";
+          phase.weeks.forEach((week, wIdx) => {
+            const wc = countWeek(week);
+            const isDone = wc.done === wc.total && wc.total > 0;
+            let tasksHTML = "";
+            week.tasks.forEach((t, i) => {
+              const id = taskId(week.id, i);
+              const checked = state[id] ? "checked" : "";
+              const doneClass = state[id] ? " done" : "";
+              tasksHTML +=
+                '<div class="task' +
+                doneClass +
+                '">' +
+                '<input type="checkbox" id="' +
+                id +
+                '" ' +
+                checked +
+                ' data-task="' +
+                id +
+                '">' +
+                '<label for="' +
+                id +
+                '">' +
+                t +
+                "</label></div>";
+            });
+            weeksHTML +=
+              '<div class="week' +
+              (wIdx === 0 && pIdx === 0 ? " open" : "") +
+              '" data-week="' +
+              week.id +
+              '">' +
+              '<div class="week-head" data-toggle="' +
+              week.id +
+              '">' +
+              '<span class="week-title">' +
+              week.title +
+              '<span class="chevron">▸</span></span>' +
+              '<span class="week-count' +
+              (isDone ? " done" : "") +
+              '">' +
+              wc.done +
+              "/" +
+              wc.total +
+              "</span>" +
+              "</div>" +
+              '<div class="week-body">' +
+              tasksHTML +
+              "</div>" +
+              "</div>";
+          });
+
+          section.innerHTML = introHTML + weeksHTML;
+          containerEl.appendChild(section);
+        });
+
+        // wire checkboxes
+        containerEl.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+          cb.addEventListener("change", onToggle);
+        });
+        // wire week collapse
+        containerEl.querySelectorAll(".week-head").forEach((h) => {
+          h.addEventListener("click", () => {
+            h.closest(".week").classList.toggle("open");
+          });
+        });
+
+        renderOverall();
+      }
+
+      function switchPhase(phaseId) {
+        document.querySelectorAll(".tab").forEach((t) => {
+          t.classList.toggle("active", t.dataset.phase === phaseId);
+        });
+        document.querySelectorAll("section.phase").forEach((s) => {
+          s.classList.toggle("active", s.dataset.phase === phaseId);
+        });
+      }
+
+      function renderOverall() {
+        const c = countAll();
+        const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+        document.getElementById("overallPct").textContent = pct + "%";
+        document.getElementById("overallCount").textContent =
+          c.done + " / " + c.total + " tasks";
+        document.getElementById("overallBar").style.width = pct + "%";
+
+        const statusEl = document.getElementById("statusLine");
+        if (c.done === 0) {
+          statusEl.textContent =
+            "Let's get started — check off your first task.";
+        } else if (pct < 15) {
+          statusEl.textContent =
+            "Good start. Week 1 is the foundation — take your time with it.";
+        } else if (pct < 40) {
+          statusEl.textContent =
+            "Solid momentum. Keep pushing through the fundamentals.";
+        } else if (pct < 70) {
+          statusEl.textContent =
+            "Past the halfway point. You're building real full stack skills now.";
+        } else if (pct < 100) {
+          statusEl.textContent =
+            "Closing in on job-ready. Keep applying while you finish up.";
+        } else {
+          statusEl.textContent =
+            "Full roadmap complete. Time to go get that job.";
+        }
+      }
+
+      async function onToggle(e) {
+        const id = e.target.dataset.task;
+        state[id] = e.target.checked;
+        await saveState();
+        render();
+        // restore open week after re-render
+      }
+
+      async function saveState() {
+        const noteEl = document.getElementById("saveNote");
+        try {
+          await window.storage.set("roadmap-progress", JSON.stringify(state));
+          noteEl.textContent = "Saved";
+          setTimeout(() => {
+            if (noteEl.textContent === "Saved") noteEl.textContent = "";
+          }, 1500);
+        } catch (err) {
+          noteEl.textContent = "Save failed — progress may not persist";
+          console.error("Storage error:", err);
+        }
+      }
+
+      async function loadState() {
+        try {
+          const result = await window.storage.get("roadmap-progress");
+          if (result && result.value) {
+            state = JSON.parse(result.value);
+          }
+        } catch (err) {
+          state = {};
+        }
+      }
+
+      document
+        .getElementById("resetBtn")
+        .addEventListener("click", async () => {
+          if (!confirm("Reset all checked progress? This cannot be undone."))
+            return;
+          state = {};
+          try {
+            await window.storage.set("roadmap-progress", JSON.stringify(state));
+          } catch (err) {
+            console.error(err);
+          }
+          render();
+        });
+
+      (async function init() {
+        await loadState();
+        render();
+      })();
+    </script>
+  </body>
+</html>
